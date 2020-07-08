@@ -3,12 +3,31 @@
  */
 package org.mikeneck.duration;
 
+import java.io.ByteArrayOutputStream;
+import java.nio.charset.StandardCharsets;
+import java.time.Clock;
+import java.time.Duration;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import org.junit.jupiter.api.Test;
-import static org.junit.jupiter.api.Assertions.*;
+import org.junit.jupiter.api.extension.ExtendWith;
+import picocli.CommandLine;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+@ExtendWith(StdOutReplacer.class)
 class AppTest {
-    @Test void appHasAGreeting() {
-        App classUnderTest = new App();
-        assertNotNull(classUnderTest.getGreeting(), "app should have a greeting");
+
+    @Test
+    void normal(ByteArrayOutputStream out) {
+        OffsetDateTime input = OffsetDateTime.of(2020, 5, 4, 15, 2, 1, 0, ZoneOffset.UTC);
+        Duration duration = Duration.parse("PT-128H-45M-30S");
+        OffsetDateTime now = input.minus(duration);
+        Clock clock = Clock.fixed(now.toInstant(), ZoneOffset.UTC);
+        App app = new App(clock);
+        int result = new CommandLine(app).execute("2020-05-04T15:02:01Z");
+        assertEquals(0, result);
+        String stdOut = out.toString(StandardCharsets.UTF_8);
+        assertEquals("PT-128H-45M-30S\n", stdOut);
     }
 }
