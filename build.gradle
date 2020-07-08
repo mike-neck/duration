@@ -38,3 +38,16 @@ nativeImage {
             '--no-fallback'
     )
 }
+
+generateNativeImageConfig {
+    enabled = true
+    byRunningApplication {
+        it.arguments("2020-01-02T15:04:05.000Z")
+    }
+    byRunningApplication {
+        it.arguments("-h")
+    }
+    byRunningApplication {
+        it.arguments("invalid formatted datetime")
+    }
+}
