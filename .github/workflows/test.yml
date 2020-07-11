@@ -37,7 +37,7 @@ jobs:
           path: build/reports/tests/test
 
       - name: native image
-        run: ./gradlew nativeImage
+        run: ./gradlew installNativeImage nativeImage
 
       - name: test native binary
         run: |
