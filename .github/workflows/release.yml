@@ -25,6 +25,11 @@ jobs:
           INPUT_PASSWORD: ${{ github.event.inputs.password }}
           RELEASE_PASSWORD: ${{ secrets.RELEASE_PASSWORD }}
 
+      - name: test refs
+        run: '[[ "${REF}" == "master" ]]'
+        env:
+          REF: ${{ github.event.refs }}
+
       - name: verify inputs
         run: echo "${LEVEL}" | grep -E -q '(major|minor|patch)'
         env:
