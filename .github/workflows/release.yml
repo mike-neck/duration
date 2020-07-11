@@ -67,7 +67,7 @@ jobs:
           echo "$RELEASE_ID" >> release.txt
           echo "$RELEASE_URL" >> release.txt
         env:
-          PROJECT_VERSION: ${{ steps.projectVersion.outputs.version }}
+          PROJECT_VERSION: ${{ steps.next-version.outputs.new_version }}
           RELEASE_URL: ${{ steps.release.outputs.upload_url }}
           RELEASE_ID: ${{ steps.release.outputs.id }}
 
@@ -115,8 +115,9 @@ jobs:
         name: configure release url
         id: config
         run: |
-          version=`head -n 1 release/release.txt`
-          url=`tail -n 1 release/release.txt`
+          version=$(head -n 1 release/release.txt)
+          url=$(tail -n 1 release/release.txt)
+          echo "version: ${version}"
           echo "::set-output name=projectVersion::${version}"
           echo "::set-output name=releaseUrl::${url}"
       -
