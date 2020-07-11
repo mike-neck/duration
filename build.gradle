@@ -6,7 +6,12 @@ plugins {
 
 ext {
     appMainClass = 'org.mikeneck.duration.App'
+    projectVersion = System.getenv('PROJECT_VERSION') == null?
+            'develop':
+            "${System.getenv('PROJECT_VERSION')}"
 }
+
+version = projectVersion
 
 sourceCompatibility = JavaVersion.VERSION_11
 targetCompatibility = JavaVersion.VERSION_11
@@ -30,6 +35,18 @@ test {
     useJUnitPlatform()
 }
 
+task writeVersion(group: 'build') {
+    def resourceFile = file("${processResources.destinationDir}/Duration.properties")
+    outputs.file(resourceFile)
+    doLast {
+        resourceFile.write("""|#application version
+        |app.version=${projectVersion}
+        |""".stripMargin())
+    }
+}
+
+processResources.finalizedBy(writeVersion)
+
 nativeImage {
     graalVmHome = System.getenv('JAVA_HOME')
     mainClass = appMainClass
@@ -50,4 +67,15 @@ generateNativeImageConfig {
     byRunningApplication {
         it.arguments("invalid formatted datetime")
     }
+    byRunningApplication {
+        it.arguments("--version")
+    }
+}
+
+task zipNativeImage(type: Zip, dependsOn: "nativeImage", group: 'release') {
+    def runOs = System.getenv('RUNNING_OS')
+    def destinationDirName = runOs == null? "${project.name}": "${project.name}-$runOs"
+    from(nativeImage)
+    destinationDirectory = file("$buildDir/release")
+    archiveFileName = "$destinationDirName-${project.version}.zip"
 }

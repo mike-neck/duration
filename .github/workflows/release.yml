@@ -1,0 +1,138 @@
+name: release
+
+on:
+  workflow_dispatch:
+    inputs:
+      release-level:
+        description: 'Release level available values: major, minor, patch'
+        required: true
+      password:
+        description: 'Password'
+        required: true
+
+jobs:
+  create-release:
+    name: release
+    runs-on: ubuntu-20.04
+    if: ( github.event.inputs.password == secrets.RELEASE_PASSWORD ) && ( contains(github.event.refs, 'master') )
+
+    steps:
+      - name: verify inputs
+        run: echo "${LEVEL}" | grep -E -q '(major|minor|patch)'
+        env:
+          LEVEL: ${{ github.event.inputs.release-level }}
+
+      - name: checkout
+        uses: actions/checkout@v2
+
+      - name: current version
+        uses: actions-ecosystem/action-get-latest-tag@v1
+        id: current-version
+
+      - name: calculate next version
+        id: next-version
+        uses: actions-ecosystem/action-bump-semver@v1
+        with:
+          current_version: ${{ steps.current-version.outputs.tag }}
+          level: ${{ github.event.inputs.release-level }}
+
+      - name: push tag
+        uses: actions-ecosystem/action-push-tag@v1
+        with:
+          tag: ${{ steps.next-version.outputs.new_version }}
+          message: "Release version ${{ steps.next-version.outputs.new_version }}"
+
+      - name: create release
+        id: release
+        uses: actions/create-release@v1.0.1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ steps.next-version.outputs.new_version }}
+          release_name: Release ${{ steps.next-version.outputs.new_version }}
+          draft: false
+          prerelease: false
+
+      - name: file release url
+        run: |
+          echo "$PROJECT_VERSION" >> release.txt
+          echo "$RELEASE_ID" >> release.txt
+          echo "$RELEASE_URL" >> release.txt
+        env:
+          PROJECT_VERSION: ${{ steps.projectVersion.outputs.version }}
+          RELEASE_URL: ${{ steps.release.outputs.upload_url }}
+          RELEASE_ID: ${{ steps.release.outputs.id }}
+
+      - name: store release url
+        uses: actions/upload-artifact@v1
+        with:
+          name: release
+          path: release.txt
+
+      - name: show actions url
+        run: echo "https://api.github.com/repos/mike-neck/duration/actions/runs/${ RUN_ID }/artifacts"
+        env:
+          RUN_ID: ${{ github.run_id }}
+
+  upload-release:
+    name: (${{ matrix.os }}) upload release
+    needs: create-release
+    strategy:
+      matrix:
+        os: [macos, ubuntu]
+    runs-on:  ${{ matrix.os }}-latest
+  
+    steps:
+      -
+        name: checkout
+        uses: actions/checkout@v2
+  
+      -
+        name: setup GraalVM
+        uses: DeLaGuardo/setup-graalvm@3
+        with:
+          graalvm-version: "20.1.0.java11"
+  
+      -
+        name: install native-image
+        run: gu install native-image
+  
+      -
+        name: download release url
+        uses: actions/download-artifact@v1
+        with:
+          name: release
+  
+      -
+        name: configure release url
+        id: config
+        run: |
+          version=`head -n 1 release/release.txt`
+          url=`tail -n 1 release/release.txt`
+          echo "::set-output name=projectVersion::${version}"
+          echo "::set-output name=releaseUrl::${url}"
+      -
+        name: cache
+        uses: actions/cache@v1
+        with:
+          path: ~/.gradle/caches
+          key: gradle-${{ hashFiles('build.gradle') }}-${{ hashFiles('gradle/wrapper/gradle-wrapper.properties') }}
+          restore-keys: gradle-
+  
+      -
+        name: "build application version: ${{ steps.config.outputs.projectVersion }}"
+        run: ./gradlew zipNativeImage
+        env:
+          RUNNING_OS: ${{ matrix.os }}
+          PROJECT_VERSION: ${{ steps.config.outputs.projectVersion }}
+  
+      -
+        name: "upload release ${{ matrix.os }}/${{ steps.config.outputs.projectVersion }}"
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.config.outputs.releaseUrl }}
+          asset_path: ./build/release/instant-${{ matrix.os }}-${{ steps.config.outputs.projectVersion }}.zip
+          asset_name: instant-${{ matrix.os }}.zip
+          asset_content_type: application/zip

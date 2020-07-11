@@ -14,7 +14,17 @@ import java.util.Optional;
 import java.util.concurrent.Callable;
 import picocli.CommandLine;
 
-@CommandLine.Command(name = "duration", mixinStandardHelpOptions = true, description = { "Converts an input date into duration string from now." })
+@CommandLine.Command(
+        name = "duration",
+        mixinStandardHelpOptions = true,
+        resourceBundle = "Duration",
+        version = {
+                "duration",
+                "version: ${bundle:app.version:-develop}",
+                "Build OS: ${os.name}, ${os.version}, ${os.arch}",
+                "Picocli: " + CommandLine.VERSION
+        },
+        description = {"Converts an input date into duration string from now."})
 public class App implements Callable<Integer> {
 
     private final Clock clock;
