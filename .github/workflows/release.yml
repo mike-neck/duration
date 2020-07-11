@@ -14,7 +14,7 @@ jobs:
   create-release:
     name: release
     runs-on: ubuntu-20.04
-#    if: contains(github.event.refs, 'master')
+    if: contains(github.event.ref, 'master')
 
     steps:
       - name: test password
@@ -24,11 +24,6 @@ jobs:
         env:
           INPUT_PASSWORD: ${{ github.event.inputs.password }}
           RELEASE_PASSWORD: ${{ secrets.RELEASE_PASSWORD }}
-
-      - name: test refs
-        run: '[[ "${REF}" == "master" ]]'
-        env:
-          REF: ${{ github.event.refs }}
 
       - name: verify inputs
         run: echo "${LEVEL}" | grep -E -q '(major|minor|patch)'
