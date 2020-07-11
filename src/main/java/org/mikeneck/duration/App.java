@@ -20,9 +20,9 @@ import picocli.CommandLine;
         resourceBundle = "Duration",
         version = {
                 "duration",
-                "version: ${bundle:app.version:-develop}",
-                "Build OS: ${os.name}, ${os.version}, ${os.arch}",
-                "Picocli: " + CommandLine.VERSION
+                "  Version: ${bundle:app.version:-develop}",
+                "  Build OS: ${os.name}, ${os.version}, ${os.arch}",
+                "  Picocli: " + CommandLine.VERSION
         },
         description = {"Converts an input date into duration string from now."})
 public class App implements Callable<Integer> {
