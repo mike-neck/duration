@@ -1,0 +1,45 @@
+name: test
+
+on:
+  push:
+    branches:
+      - master
+      - 'feature/*'
+
+jobs:
+  run-tests:
+    runs-on: ubuntu-18.04
+
+    steps:
+      - name: check out
+        uses: actions/checkout@v2
+
+      - name: setup GraalVM
+        uses: DeLaGuardo/setup-graalvm@3
+        with:
+          graalvm-version: '20.0.0.java11'
+
+      - name: cache
+        uses: actions/cache@v1
+        with:
+          path: ~/.gradle/caches
+          key: gradle-${{ hashFiles('build.gradle') }}-${{ hashFiles('gradle/wrapper/gradle-wrapper.properties') }}
+          restore-keys: gradle-
+
+      - name: run tests
+        run: ./gradlew test
+
+      - name: reports
+        uses: actions/upload-artifact@v1
+        if: always()
+        with:
+          name: test-report
+          path: build/reports/tests/test
+
+      - name: native image
+        run: ./gradlew nativeImage
+
+      - name: test native binary
+        run: |
+          ./build/native-image/duration
+          ./build/native-image/duration '2020-01-02T15:04:05.600Z'
