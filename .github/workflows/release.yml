@@ -78,7 +78,7 @@ jobs:
           path: release.txt
 
       - name: show actions url
-        run: echo "https://api.github.com/repos/mike-neck/duration/actions/runs/${ RUN_ID }/artifacts"
+        run: echo "https://api.github.com/repos/mike-neck/duration/actions/runs/${RUN_ID}/artifacts"
         env:
           RUN_ID: ${{ github.run_id }}
 
