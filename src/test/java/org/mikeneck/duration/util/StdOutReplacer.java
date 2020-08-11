@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.mikeneck.duration;
+package org.mikeneck.duration.util;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
@@ -38,7 +38,7 @@ public class StdOutReplacer implements ParameterResolver, AfterEachCallback {
 
     @Override
     public boolean supportsParameter(ParameterContext parameterContext, ExtensionContext extensionContext) throws ParameterResolutionException {
-        return parameterContext.getParameter().getType().equals(ByteArrayOutputStream.class);
+        return parameterContext.getParameter().getType().equals(StdOut.class);
     }
 
     @Override
@@ -48,6 +48,6 @@ public class StdOutReplacer implements ParameterResolver, AfterEachCallback {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         PrintStream printStream = new PrintStream(out);
         System.setOut(printStream);
-        return out;
+        return (StdOut) () -> out;
     }
 }
