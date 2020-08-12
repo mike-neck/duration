@@ -17,37 +17,39 @@ package org.mikeneck.duration.util;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
-import org.junit.jupiter.api.extension.AfterEachCallback;
-import org.junit.jupiter.api.extension.ExtensionContext;
-import org.junit.jupiter.api.extension.ParameterContext;
-import org.junit.jupiter.api.extension.ParameterResolutionException;
-import org.junit.jupiter.api.extension.ParameterResolver;
+import org.jetbrains.annotations.NotNull;
 
-public class StdOutReplacer implements ParameterResolver, AfterEachCallback {
-
-    private final ExtensionContext.Namespace namespace = ExtensionContext.Namespace.create(StdOutReplacer.class);
+public class StdOutReplacer extends OutputReplacer<ByteArrayOutputStream, StdOut> {
 
     @Override
-    public void afterEach(ExtensionContext context) {
-        ExtensionContext.Store store = context.getStore(namespace);
-        PrintStream printStream = store.get(PrintStream.class, PrintStream.class);
-        if (printStream != null) {
-            System.setOut(printStream);
-        }
+    @NotNull Class<? extends OutputReplacer<ByteArrayOutputStream, StdOut>> getNamespaceKey() {
+        return StdOutReplacer.class;
     }
 
     @Override
-    public boolean supportsParameter(ParameterContext parameterContext, ExtensionContext extensionContext) throws ParameterResolutionException {
-        return parameterContext.getParameter().getType().equals(StdOut.class);
+    @NotNull Class<StdOut> getTargetType() {
+        return StdOut.class;
+    }
+
+    @NotNull
+    @Override
+    ByteArrayOutputStream createNew() {
+        return new ByteArrayOutputStream();
     }
 
     @Override
-    public Object resolveParameter(ParameterContext parameterContext, ExtensionContext extensionContext) throws ParameterResolutionException {
-        ExtensionContext.Store store = extensionContext.getStore(namespace);
-        store.put(PrintStream.class, System.out);
-        ByteArrayOutputStream out = new ByteArrayOutputStream();
-        PrintStream printStream = new PrintStream(out);
-        System.setOut(printStream);
-        return (StdOut) () -> out;
+    void setStdIo(@NotNull PrintStream replacing) {
+        System.setOut(replacing);
+    }
+
+    @Override
+    @NotNull PrintStream getOriginal() {
+        return System.out;
+    }
+
+    @NotNull
+    @Override
+    StdOut toParameterType(@NotNull ByteArrayOutputStream stream) {
+        return () -> stream;
     }
 }

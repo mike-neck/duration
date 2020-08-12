@@ -19,7 +19,7 @@ import java.io.ByteArrayOutputStream;
 import org.jetbrains.annotations.NotNull;
 
 @FunctionalInterface
-public interface StdOut extends Out<ByteArrayOutputStream> {
+public interface StdErr extends Out<ByteArrayOutputStream> {
 
     @Override
     @NotNull ByteArrayOutputStream get();

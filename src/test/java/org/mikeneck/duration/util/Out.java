@@ -15,12 +15,10 @@
  */
 package org.mikeneck.duration.util;
 
-import java.io.ByteArrayOutputStream;
+import java.io.OutputStream;
 import org.jetbrains.annotations.NotNull;
 
-@FunctionalInterface
-public interface StdOut extends Out<ByteArrayOutputStream> {
+public interface Out<IO extends OutputStream> {
 
-    @Override
-    @NotNull ByteArrayOutputStream get();
+    @NotNull IO get();
 }
