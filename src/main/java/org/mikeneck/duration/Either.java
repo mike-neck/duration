@@ -32,6 +32,26 @@ interface Either<@NotNull L, @NotNull R> {
 
     @NotNull
     R orElse(@NotNull Function<@NotNull ? super L, @NotNull ? extends R> mapping);
+
+    @NotNull
+    default R get() {
+        throw new IllegalStateException("invalid state to call get");
+    }
+
+    @NotNull
+    default L error() {
+        throw new IllegalStateException("invalid state to call error");
+    }
+
+    @NotNull
+    static <@NotNull L, @NotNull R> Either<L, R> left(@NotNull L left) {
+        return new Left<>(left);
+    }
+
+    @NotNull
+    static <@NotNull L, @NotNull R> Either<L, R> right(@NotNull R right) {
+        return new Right<>(right);
+    }
 }
 
 class Left<@NotNull L, @NotNull R> implements Either<L, R> {
@@ -46,6 +66,12 @@ class Left<@NotNull L, @NotNull R> implements Either<L, R> {
     @Override
     public boolean isRight() {
         return false;
+    }
+
+    @NotNull
+    @Override
+    public L error() {
+        return value;
     }
 
     @Override
@@ -92,6 +118,12 @@ class Right<@NotNull L, @NotNull R> implements Either<L, R> {
     @Override
     public boolean isRight() {
         return true;
+    }
+
+    @NotNull
+    @Override
+    public R get() {
+        return value;
     }
 
     @Override

@@ -10,13 +10,17 @@ import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mikeneck.duration.util.StdErr;
+import org.mikeneck.duration.util.StdErrReplacer;
 import org.mikeneck.duration.util.StdOut;
 import org.mikeneck.duration.util.StdOutReplacer;
 import picocli.CommandLine;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-@ExtendWith(StdOutReplacer.class)
+@ExtendWith({StdOutReplacer.class, StdErrReplacer.class})
 class AppTest {
 
     @Test
@@ -30,5 +34,16 @@ class AppTest {
         assertEquals(0, result);
         String stdOut = out.get().toString(StandardCharsets.UTF_8);
         assertEquals("PT-128H-45M-30S\n", stdOut);
+    }
+
+    @Test
+    void errorInput(StdOut out, StdErr err) {
+        App app = new App(Clock.systemDefaultZone());
+        int result = new CommandLine(app).execute("foo-bar-baz");
+        assertAll(
+                () -> assertEquals(1, result),
+                () -> assertEquals("", out.get().toString(StandardCharsets.UTF_8)),
+                () -> assertThat(err.get()).asString().contains("invalid parameter")
+        );
     }
 }
