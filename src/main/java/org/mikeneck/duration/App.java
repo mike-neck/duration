@@ -10,7 +10,6 @@ import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
-import java.util.Optional;
 import java.util.concurrent.Callable;
 import picocli.CommandLine;
 
@@ -47,8 +46,9 @@ public class App implements Callable<Integer> {
     @Override
     public Integer call() {
         OffsetDateTime now = Instant.now(clock).atOffset(ZoneOffset.UTC);
-        Optional<OffsetDateTime> dateTime = datetime();
-        if (dateTime.isEmpty()) {
+        Either<String, OffsetDateTime> dateTime = datetime();
+        if (dateTime.isLeft()) {
+            System.err.println(dateTime.error());
             return 1;
         }
         Duration duration = Duration.between(now, dateTime.get());
@@ -56,12 +56,12 @@ public class App implements Callable<Integer> {
         return 0;
     }
 
-    private Optional<OffsetDateTime> datetime() {
+    private Either<String, OffsetDateTime> datetime() {
         try {
             OffsetDateTime dateTime = OffsetDateTime.parse(dateTimeString, formatter);
-            return Optional.ofNullable(dateTime);
+            return Either.right(dateTime);
         } catch (DateTimeException e) {
-            return Optional.empty();
+            return Either.left(String.format("invalid parameter: %s", e.getMessage()));
         }
     }
 }

@@ -3,7 +3,6 @@
  */
 package org.mikeneck.duration;
 
-import java.io.ByteArrayOutputStream;
 import java.nio.charset.StandardCharsets;
 import java.time.Clock;
 import java.time.Duration;
@@ -11,15 +10,21 @@ import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mikeneck.duration.util.StdErr;
+import org.mikeneck.duration.util.StdErrReplacer;
+import org.mikeneck.duration.util.StdOut;
+import org.mikeneck.duration.util.StdOutReplacer;
 import picocli.CommandLine;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-@ExtendWith(StdOutReplacer.class)
+@ExtendWith({StdOutReplacer.class, StdErrReplacer.class})
 class AppTest {
 
     @Test
-    void normal(ByteArrayOutputStream out) {
+    void normal(StdOut out) {
         OffsetDateTime input = OffsetDateTime.of(2020, 5, 4, 15, 2, 1, 0, ZoneOffset.UTC);
         Duration duration = Duration.parse("PT-128H-45M-30S");
         OffsetDateTime now = input.minus(duration);
@@ -27,7 +32,18 @@ class AppTest {
         App app = new App(clock);
         int result = new CommandLine(app).execute("2020-05-04T15:02:01Z");
         assertEquals(0, result);
-        String stdOut = out.toString(StandardCharsets.UTF_8);
+        String stdOut = out.get().toString(StandardCharsets.UTF_8);
         assertEquals("PT-128H-45M-30S\n", stdOut);
+    }
+
+    @Test
+    void errorInput(StdOut out, StdErr err) {
+        App app = new App(Clock.systemDefaultZone());
+        int result = new CommandLine(app).execute("foo-bar-baz");
+        assertAll(
+                () -> assertEquals(1, result),
+                () -> assertEquals("", out.get().toString(StandardCharsets.UTF_8)),
+                () -> assertThat(err.get()).asString().contains("invalid parameter")
+        );
     }
 }
